@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:foresee_cycles/utils/styles.dart';
 import 'package:foresee_cycles/pages/auth/login.dart';
@@ -11,6 +12,8 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
 
+  FirebaseAuth auth = FirebaseAuth.instance;
+
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   TextEditingController emailController = TextEditingController();
@@ -18,6 +21,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _toggleVisibility = true;
   bool checkedValue = false;
+
+  void isUserSignedIn() {
+    FirebaseAuth.instance
+      .authStateChanges()
+      .listen((User user) {
+        if (user == null) {
+          print('User is currently signed out!');
+        } else {
+          print('User is signed in!');
+        }
+      },
+    );
+  }
+
+  @override
+    void initState() {
+      isUserSignedIn();
+      super.initState();
+    }
   
   @override
   Widget build(BuildContext context) {

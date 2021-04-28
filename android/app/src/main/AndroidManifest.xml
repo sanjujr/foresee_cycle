@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.foresee_cycles">
    <application
-        android:label="foresee_cycles"
+        android:label="Foresee Cycle"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

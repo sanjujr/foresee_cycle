@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:foresee_cycles/pages/welcome.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+import 'package:foresee_cycles/pages/splash.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -10,11 +14,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Foresee Cycles',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
       debugShowCheckedModeBanner: false,
-      home: WelcomeScreen(),
+      home: SplashScreen(),
     );
   }
 }

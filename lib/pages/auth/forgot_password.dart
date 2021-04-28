@@ -84,11 +84,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                             },
                             decoration: InputDecoration(
                               hintText: 'Enter your email',
-
-                              //labelText: "Enter your email",
-
-                              labelStyle:
-                              TextStyle(color: Colors.black26, fontSize: 8),
+                              labelStyle: TextStyle(color: Colors.black26, fontSize: 8),
                             ),
                           ),
                           SizedBox(
@@ -98,23 +94,32 @@ class ForgotPasswordScreen extends StatelessWidget {
                             onTap: () {
                               
                             },
-                            child: Container(
-                                height: 50,
-                                width: 170,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).buttonColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'Send',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.center,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.05),
+                              child: GestureDetector(
+                                child: Container(
+                                  height: 50.0,
+                                  width: MediaQuery.of(context).size.width,
+                                  decoration: BoxDecoration(
+                                      color: CustomColors.primaryColor,
+                                      borderRadius: BorderRadius.all(Radius.circular(20))
                                   ),
-                                )),
+                                  child: Center(
+                                    child: Text(
+                                      'send'.toUpperCase(),
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: screenSize.width * 0.06,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                onTap: () {
+                                  print("Forgot Password Button Pressed");
+                                },
+                              ),
+                            ),
                           ),
                         ],
                       ),
