@@ -13,9 +13,6 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-// Variables used
-bool isUser = false;
-
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -28,28 +25,17 @@ class _SplashScreenState extends State<SplashScreen> {
       .listen((User user) {
         if (user == null) {
           print('User is currently signed out!');
-          setState(() {
-            isUser = false;
-          });
-          // return false;
+          //Navigate to welcomescreen
+          Timer(Duration(seconds: 2), () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => WelcomeScreen())));
         } else {
           print('User is signed in!');
-          setState(() {
-            isUser = true;
-          });
-          // return true;
+          //navigate to homescreen
+          Timer(Duration(seconds: 2), () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen())));
         }
       },
     );
-
-    if (isUser == false) {
-      //Navigate to welcomescreen
-      Timer(Duration(seconds: 2), () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => WelcomeScreen())));
-    } else {
-      //navigate to homescreen
-      Timer(Duration(seconds: 2), () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen())));
-    }
   }
+
 
   @override
   Widget build(BuildContext context) {

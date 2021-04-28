@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:foresee_cycles/utils/styles.dart';
 import 'package:foresee_cycles/pages/auth/signup.dart';
@@ -19,6 +21,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _toggleVisibility = true;
   bool checkedValue = false;
+  String userName, password;
+
+  bool validateAndSave() {
+    final form = formKey.currentState;
+    if (form.validate()) {
+      form.save();
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> signIn() async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: userName,
+        password: password
+      );
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) =>
+          HomeScreen()));
+      print(userCredential);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        showSnackbar("No user found for that email.");
+        print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        showSnackbar('Wrong password provided for that user.');
+        print('Wrong password provided for that user.');
+      }
+    }
+  }
+
+  void showSnackbar(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.SNACKBAR,
+      timeInSecForIosWeb: 2,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -87,6 +131,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(10),
                             child: TextFormField(
                               onSaved: (input) {
+                                setState(() {
+                                  userName = input;
+                                });
                                 print('UserName: $input');
                               },
                               decoration: InputDecoration(
@@ -125,6 +172,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(10),
                             child: TextFormField(
                               onSaved: (input) {
+                                setState(() {
+                                  password = input;
+                                });
                                 print('Password: $input');
                               },
                               decoration: InputDecoration(
@@ -218,8 +268,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(builder: (context) =>
-                            HomeScreen()));
+                        if(validateAndSave()){
+                          signIn();
+                        }
                       },
                     ),
                   ),
