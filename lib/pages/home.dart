@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:foresee_cycles/pages/auth/login.dart';
 import 'package:foresee_cycles/utils/styles.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,8 +17,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text("Home"),
         backgroundColor: CustomColors.primaryColor,
         brightness: Brightness.light,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout, color: CustomColors.secondaryColor,),
+            onPressed: () async{
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) =>
+                  LoginScreen()));
+              print("Signed Out");
+            },
+          )
+        ],
       ),
-      drawer: Drawer(elevation: 5,),
       body: Container(
         child: Center(
           child: Text("Home Page"),
