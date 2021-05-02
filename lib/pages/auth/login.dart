@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:foresee_cycles/utils/styles.dart';
 import 'package:foresee_cycles/pages/auth/signup.dart';
-import 'package:foresee_cycles/pages/home.dart';
+import 'package:foresee_cycles/pages/home/home_page.dart';
 import 'package:foresee_cycles/pages/auth/forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {

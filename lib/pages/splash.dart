@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:foresee_cycles/pages/welcome.dart';
 import 'package:foresee_cycles/utils/constant_data.dart';
-import 'home.dart';
+import 'home/home_page.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
