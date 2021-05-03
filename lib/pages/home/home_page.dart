@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:foresee_cycles/utils/constant_data.dart';
-import 'package:table_calendar/table_calendar.dart';
-import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
-    show CalendarCarousel;
+import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart' show CalendarCarousel;
 
 import 'package:foresee_cycles/pages/auth/login.dart';
 import 'package:foresee_cycles/pages/home/appbar.dart';
