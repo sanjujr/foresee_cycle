@@ -1,13 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart' as prefix;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_calendar_carousel/classes/event.dart';
 import 'package:foresee_cycles/utils/constant_data.dart';
-import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart' show CalendarCarousel;
+import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
+    show CalendarCarousel, EventList;
 
 import 'package:foresee_cycles/pages/auth/login.dart';
 import 'package:foresee_cycles/pages/home/appbar.dart';
 import 'package:foresee_cycles/pages/home/chat_widget.dart';
 import 'package:foresee_cycles/pages/home/note_widget.dart';
 import 'package:foresee_cycles/utils/styles.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart ';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -19,12 +24,34 @@ bool isCalender = false,
     isHome = true,
     isProfile = false,
     isNote = false;
+int periodDays = 4;
+DateTime _currentDate;
+Timestamp _startTimeStamp;
+List<DateTime> dates;
+// DateTime _endDate;
+
+FirebaseFirestore firestore = FirebaseFirestore.instance;
+EventList<Event> _markedDates;
+AsyncSnapshot<QuerySnapshot> streamSnapshot;
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    _markedDates = EventList<Event>(events: {});
+    dates = [];
+    if (streamSnapshot.data == null) {
+      streamSnapshot = AsyncSnapshot.waiting();
+    } else {
+      _startTimeStamp = streamSnapshot.data.docs[0]['start_date'];
+    }
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: MyHomeBody(),
+      // : Text('Loading...'),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
@@ -227,28 +254,71 @@ class _MyHomeBodyState extends State<MyHomeBody> {
     );
   }
 
-  DateTime _currentDate;
+  calenderBodyWidget(BuildContext context) {
+    return StreamBuilder(
+      stream: firestore.collection('period_date').snapshots(),
+      builder: (BuildContext context, streamSnapshot) {
+        if (streamSnapshot.data != null) {
+          _startTimeStamp = streamSnapshot.data.docs[0]['start_date'];
 
-  Expanded calenderBodyWidget(BuildContext context) {
-    return Expanded(
-      child: CalendarCarousel(
-        onDayPressed: (DateTime date, List events) {
-          this.setState(() => _currentDate = date);
-        },
-        weekendTextStyle: TextStyle(
-          color: CustomColors.primaryColor,
-        ),
-        thisMonthDayBorderColor: Colors.white,
-        weekFormat: false,
-        height: MediaQuery.of(context).size.height * 0.6,
-        selectedDateTime: _currentDate,
-        selectedDayButtonColor: Colors.white,
-        selectedDayBorderColor: CustomColors.primaryColor,
-        selectedDayTextStyle: TextStyle(color: Colors.black),
-        daysHaveCircularBorder: true,
-        isScrollable: false,
-        todayButtonColor: CustomColors.primaryColor,
-      ),
+          DateTime _startDate =
+              DateTime.parse(_startTimeStamp.toDate().toString());
+          dates = [];
+          dates.add(_startDate);
+          for (int i = 1; i < periodDays; i++) {
+            _startDate = _startDate.add(Duration(days: 1));
+            dates.add(_startDate);
+          }
+          _markedDates = EventList<Event>(events: {});
+          // print(dates);
+          for (int i = 0; i < periodDays; i++) {
+            _markedDates.add(
+                dates[i],
+                new Event(
+                    date: dates[i],
+                    title: "Period",
+                    icon: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: CustomColors.primaryColor,
+                      ),
+                      child: Center(
+                        child: Text(dates[i].day.toString()),
+                      ),
+                    )));
+            // print(_startDate);
+          }
+        }
+        return streamSnapshot.hasData
+            ? CalendarCarousel<Event>(
+                onDayPressed: (DateTime date, List events) {
+                  this.setState(() => _currentDate = date);
+                  firestore
+                      .collection('period_date')
+                      .doc('date')
+                      .update({'start_date': _currentDate});
+                },
+                weekendTextStyle: TextStyle(
+                  color: CustomColors.primaryColor,
+                ),
+                markedDatesMap: _markedDates,
+                markedDateShowIcon: true,
+                markedDateIconBuilder: ((event) => event.icon),
+                markedDateIconMaxShown: 1,
+                markedDateMoreShowTotal: null,
+                thisMonthDayBorderColor: Colors.white,
+                weekFormat: false,
+                height: MediaQuery.of(context).size.height * 0.6,
+                selectedDateTime: _currentDate,
+                selectedDayButtonColor: Colors.white,
+                // selectedDayBorderColor: CustomColors.primaryColor,
+                selectedDayTextStyle: TextStyle(color: Colors.black),
+                daysHaveCircularBorder: true,
+                isScrollable: false,
+                todayButtonColor: Colors.blueAccent,
+              )
+            : Center(child: Text('Loading...'));
+      },
     );
   }
 
@@ -274,10 +344,9 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                     Text(
                       'Profile',
                       style: TextStyle(
-                        color: CustomColors.primaryColor,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold
-                      ),
+                          color: CustomColors.primaryColor,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold),
                     ),
                     Expanded(child: SizedBox()),
                     InkWell(
@@ -285,10 +354,9 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                       child: Text(
                         'Edit',
                         style: TextStyle(
-                        color: CustomColors.primaryColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold
-                      ),
+                            color: CustomColors.primaryColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
                       ),
                     )
                   ],
@@ -304,62 +372,61 @@ class _MyHomeBodyState extends State<MyHomeBody> {
           child: Container(
             height: MediaQuery.of(context).size.height * 0.15,
             child: Card(
-              elevation: 3,
-              semanticContainer: true,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5)),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.height * 0.085,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: DecorationImage(image: AssetImage(ConstantsData.userImage))
+                elevation: 3,
+                semanticContainer: true,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.height * 0.085,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                                image: AssetImage(ConstantsData.userImage))),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Julianne Hough",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Julianne Hough",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
                             ),
-                          ),
-                          Text(
-                            "+91 9061 157 246",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold
+                            Text(
+                              "+91 9061 157 246",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
                             ),
-                          ),
-                          Text(
-                            "juliannehough29@gmail.com",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold
-                            ),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              )
-            ),
+                            Text(
+                              "juliannehough29@gmail.com",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                )),
           ),
         ),
         Padding(
-          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.3, left: 14, right: 14),
+          padding: EdgeInsets.only(
+              top: MediaQuery.of(context).size.height * 0.3,
+              left: 14,
+              right: 14),
           child: Card(
             elevation: 3,
             semanticContainer: true,
@@ -371,9 +438,7 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                 Padding(
                   padding: const EdgeInsets.only(left: 14),
                   child: InkWell(
-                    onTap: () {
-
-                    },
+                    onTap: () {},
                     child: Row(
                       children: <Widget>[
                         Icon(
@@ -411,9 +476,7 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                 Padding(
                   padding: const EdgeInsets.only(left: 14),
                   child: InkWell(
-                    onTap: () {
-                      
-                    },
+                    onTap: () {},
                     child: Row(
                       children: <Widget>[
                         Icon(
@@ -454,8 +517,8 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                     onTap: () async {
                       print("logout");
                       await FirebaseAuth.instance.signOut();
-                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) =>
-                      LoginScreen()));
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (context) => LoginScreen()));
                     },
                     child: Row(
                       children: <Widget>[
