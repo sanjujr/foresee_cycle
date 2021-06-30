@@ -3,10 +3,11 @@ import 'package:firebase_database/firebase_database.dart' as prefix;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_calendar_carousel/classes/event.dart';
+import 'package:foresee_cycles/pages/models.dart';
 import 'package:foresee_cycles/utils/constant_data.dart';
 import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
     show CalendarCarousel, EventList;
-
+import 'package:intl/intl.dart';
 import 'package:foresee_cycles/pages/auth/login.dart';
 import 'package:foresee_cycles/pages/home/appbar.dart';
 import 'package:foresee_cycles/pages/home/chat_widget.dart';
@@ -24,7 +25,7 @@ bool isCalender = false,
     isHome = true,
     isProfile = false,
     isNote = false;
-int periodDays = 4;
+int periodDays = userdata.periodDays;
 DateTime _currentDate;
 Timestamp _startTimeStamp;
 List<DateTime> dates;
@@ -35,23 +36,86 @@ EventList<Event> _markedDates;
 AsyncSnapshot<QuerySnapshot> streamSnapshot;
 
 class _HomeScreenState extends State<HomeScreen> {
+  List documents;
+
+  Future setData() async {
+    streamSnapshot = AsyncSnapshot.nothing();
+    if (!streamSnapshot.hasData) {
+      _startTimeStamp = await streamSnapshot.data.docs[0]['start_date'];
+    } else {}
+    print(_startTimeStamp);
+  }
+
+  fetchData() async {
+    CollectionReference collectionReference =
+        FirebaseFirestore.instance.collection('period_date');
+
+    collectionReference.snapshots().listen((snapshot) {
+      setState(() {
+        documents = snapshot.docs;
+      });
+    });
+
+    _markedDates = EventList<Event>(events: {});
+
+    for (int i = 1; i < documents.length; i++) {
+      dates = [];
+      _startTimeStamp = documents[i]['start_date'];
+      var periodDayss = documents[i]['period_days'];
+      DateTime _startDate = DateTime.parse(_startTimeStamp.toDate().toString());
+
+      dates.add(_startDate);
+      for (int i = 1; i < periodDayss; i++) {
+        _startDate = _startDate.add(Duration(days: 1));
+        dates.add(_startDate);
+      }
+
+      for (int i = 0; i < dates.length; i++) {
+        _markedDates.add(
+            dates[i],
+            new Event(
+                date: dates[i],
+                title: "Period",
+                icon: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: CustomColors.primaryColor,
+                  ),
+                  child: Center(
+                    child: Text(dates[i].day.toString()),
+                  ),
+                )));
+        // print(_startDate);
+      }
+    }
+    print(_markedDates);
+  }
+
   @override
   void initState() {
+    // FirebaseAuth.instance.signOut();
     _markedDates = EventList<Event>(events: {});
     dates = [];
-    if (streamSnapshot.data == null) {
-      streamSnapshot = AsyncSnapshot.waiting();
-    } else {
-      _startTimeStamp = streamSnapshot.data.docs[0]['start_date'];
-    }
+    setData();
+    fetchData();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: MyHomeBody(),
-      // : Text('Loading...'),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () => setData(),
+      // ),
+      body: StreamBuilder(
+          stream: firestore.collection('period_date').snapshots(),
+          builder: (BuildContext context, streamSnapshot) {
+            return streamSnapshot.hasData
+                ? MyHomeBody(DateTime.parse(
+                    documents[0]['start_date'].toDate().toString()))
+                : Text('Loading...');
+          }),
+
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
@@ -153,6 +217,8 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class MyHomeBody extends StatefulWidget {
+  final DateTime lastPeriod;
+  MyHomeBody(this.lastPeriod);
   @override
   _MyHomeBodyState createState() => _MyHomeBodyState();
 }
@@ -168,6 +234,10 @@ class _MyHomeBodyState extends State<MyHomeBody> {
       ),
     );
   }
+
+  String formattedDate;
+  final today = DateTime.now();
+  int difference;
 
   Expanded homeBodyWidget(BuildContext context) {
     return Expanded(
@@ -217,7 +287,7 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                   Padding(
                     padding: const EdgeInsets.all(3.0),
                     child: Text(
-                      "Mar 1",
+                      formattedDate,
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 32,
@@ -227,7 +297,7 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                   Padding(
                     padding: const EdgeInsets.all(3.0),
                     child: Text(
-                      "21 days ago",
+                      "$difference days ago",
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -255,72 +325,39 @@ class _MyHomeBodyState extends State<MyHomeBody> {
   }
 
   calenderBodyWidget(BuildContext context) {
-    return StreamBuilder(
-      stream: firestore.collection('period_date').snapshots(),
-      builder: (BuildContext context, streamSnapshot) {
-        if (streamSnapshot.data != null) {
-          _startTimeStamp = streamSnapshot.data.docs[0]['start_date'];
-
-          DateTime _startDate =
-              DateTime.parse(_startTimeStamp.toDate().toString());
-          dates = [];
-          dates.add(_startDate);
-          for (int i = 1; i < periodDays; i++) {
-            _startDate = _startDate.add(Duration(days: 1));
-            dates.add(_startDate);
-          }
-          _markedDates = EventList<Event>(events: {});
-          // print(dates);
-          for (int i = 0; i < periodDays; i++) {
-            _markedDates.add(
-                dates[i],
-                new Event(
-                    date: dates[i],
-                    title: "Period",
-                    icon: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: CustomColors.primaryColor,
-                      ),
-                      child: Center(
-                        child: Text(dates[i].day.toString()),
-                      ),
-                    )));
-            // print(_startDate);
-          }
-        }
-        return streamSnapshot.hasData
-            ? CalendarCarousel<Event>(
-                onDayPressed: (DateTime date, List events) {
-                  this.setState(() => _currentDate = date);
-                  firestore
-                      .collection('period_date')
-                      .doc('date')
-                      .update({'start_date': _currentDate});
-                },
-                weekendTextStyle: TextStyle(
-                  color: CustomColors.primaryColor,
-                ),
-                markedDatesMap: _markedDates,
-                markedDateShowIcon: true,
-                markedDateIconBuilder: ((event) => event.icon),
-                markedDateIconMaxShown: 1,
-                markedDateMoreShowTotal: null,
-                thisMonthDayBorderColor: Colors.white,
-                weekFormat: false,
-                height: MediaQuery.of(context).size.height * 0.6,
-                selectedDateTime: _currentDate,
-                selectedDayButtonColor: Colors.white,
-                // selectedDayBorderColor: CustomColors.primaryColor,
-                selectedDayTextStyle: TextStyle(color: Colors.black),
-                daysHaveCircularBorder: true,
-                isScrollable: false,
-                todayButtonColor: Colors.blueAccent,
-              )
-            : Center(child: Text('Loading...'));
+    return
+        // StreamBuilder(
+        CalendarCarousel<Event>(
+      onDayPressed: (DateTime date, List events) {
+        this.setState(() => _currentDate = date);
+        firestore
+            .collection('period_date')
+            .doc('date')
+            .update({'start_date': _currentDate});
       },
+      weekendTextStyle: TextStyle(
+        color: CustomColors.primaryColor,
+      ),
+      markedDatesMap: _markedDates,
+      markedDateShowIcon: true,
+      markedDateIconBuilder: ((event) => event.icon),
+      markedDateIconMaxShown: 1,
+      markedDateMoreShowTotal: null,
+      thisMonthDayBorderColor: Colors.white,
+      weekFormat: false,
+      height: MediaQuery.of(context).size.height * 0.6,
+      selectedDateTime: _currentDate,
+      selectedDayButtonColor: Colors.white,
+      // selectedDayBorderColor: CustomColors.primaryColor,
+      selectedDayTextStyle: TextStyle(color: Colors.black),
+      daysHaveCircularBorder: true,
+      isScrollable: false,
+      todayButtonColor: Colors.blueAccent,
     );
+    // : Center(child: Text('Loading...'));
   }
+  //   );
+  // }
 
   Container profileWidget(BuildContext context) {
     return Container(
@@ -394,21 +431,21 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Julianne Hough",
+                              userdata.name,
                               style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              "+91 9061 157 246",
+                              userdata.mbNo,
                               style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              "juliannehough29@gmail.com",
+                              userdata.email,
                               style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
@@ -562,16 +599,30 @@ class _MyHomeBodyState extends State<MyHomeBody> {
     ));
   }
 
+  setDate() {
+    formattedDate = DateFormat('MMM dd').format(widget.lastPeriod);
+    difference = today.difference(widget.lastPeriod).inDays;
+  }
+
+  @override
+  void initState() {
+    setDate();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    setDate();
     return isCalender
-        ? calenderWidget(context)
+        ?
+        // SizedBox()
+        calenderWidget(context)
         : isChat
             ? chatWidget(context)
             : isHome
                 ? homeWidget(context)
                 : isNote
-                    ? noteWidget(context)
+                    ? Notes()
                     : profileWidget(context);
   }
 }
