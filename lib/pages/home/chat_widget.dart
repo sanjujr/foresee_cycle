@@ -18,7 +18,7 @@ class _ChartState extends State<Chart> {
     ChartData(periodLength: 27),
     ChartData(periodLength: 28)
   ];
-  int avgCycleLength;
+  int avgCycleLength = 27;
   int avgPeriodLength;
   int totalPeriodLength;
   bool isLoading;

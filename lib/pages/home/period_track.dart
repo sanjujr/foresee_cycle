@@ -15,8 +15,8 @@ class _PeriodTrackerState extends State<PeriodTracker> {
   DateTime selectedDate;
   int periodLength = 0;
   List documents;
-  int avgPeriodLength;
-  int avgCycleLength;
+  int avgPeriodLength = 4;
+  int avgCycleLength = 27;
   AsyncSnapshot<QuerySnapshot> streamSnapshot;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   String formattedDate;
@@ -150,7 +150,6 @@ class _PeriodTrackerState extends State<PeriodTracker> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          // ignore: deprecated_member_use
                           Container(
                             width: size.width * 0.4,
                             child: Center(

@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:foresee_cycles/pages/models.dart';
-
+import 'package:intl/intl.dart';
 import 'package:foresee_cycles/utils/styles.dart';
 import 'package:foresee_cycles/pages/auth/login.dart';
 
@@ -22,7 +23,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _toggleVisibility = true;
   bool checkedValue = false;
 
-  String name, phone, email, password, age, height, weight;
+  String name, phone, email, password;
+  int age, height, weight;
+  DateTime selectedDate;
+  int periodLength = 0;
+  List documents;
+  int avgPeriodLength;
+  int avgCycleLength;
 
   bool validateAndSave() {
     final form = formKey.currentState;
@@ -40,6 +47,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       var userId = userCredential.user.uid;
       await DatabaseService(uid: userId)
           .updateUserData(name, age, height, weight, phone);
+      addData(selectedDate, periodLength);
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => LoginScreen()));
       print("User: $userCredential");
@@ -54,6 +62,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       print(e);
     }
+  }
+
+  addData(DateTime date, int range) {
+    Map<String, dynamic> data = {'period_days': range, 'start_date': date};
+    var databaseReference = FirebaseFirestore.instance;
+    User user = FirebaseAuth.instance.currentUser;
+    databaseReference
+        .collection('user')
+        .doc(user.uid)
+        .collection('period_date')
+        .add(data);
+    // CollectionReference collectionReference =
+    //     FirebaseFirestore.instance.collection('period_date');
+    // collectionReference.add(data);
+  }
+
+  String formattedDate;
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+        formattedDate = DateFormat('MMM dd').format(selectedDate);
+      });
   }
 
   void showSnackbar(String message) {
@@ -173,7 +209,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   child: TextFormField(
                                     onSaved: (input) {
                                       setState(() {
-                                        age = input;
+                                        age = int.parse(input);
                                       });
                                       print('age: $input');
                                     },
@@ -208,7 +244,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   child: TextFormField(
                                     onSaved: (input) {
                                       setState(() {
-                                        height = input;
+                                        height = int.parse(input);
                                       });
                                       print('Height: $input');
                                     },
@@ -243,7 +279,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   child: TextFormField(
                                     onSaved: (input) {
                                       setState(() {
-                                        weight = input;
+                                        weight = int.parse(input);
                                       });
                                       print('Weight: $input');
                                     },
@@ -295,6 +331,145 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         fontSize: 16,
                                       ),
                                     ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: 15,
+                                ),
+                                Material(
+                                  elevation: 5.0,
+                                  shadowColor: CustomColors.secondaryColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        height: screenSize.width * 0.1,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                                screenSize.width * 0.05),
+                                        // width: screenSize.width * 0.4,
+                                        child: Center(
+                                          child: Text(
+                                            'Last period',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: screenSize.width * 0.3,
+                                        child: Center(
+                                          child: Container(
+                                            width: screenSize.width * 0.3,
+                                            child: TextButton(
+                                              style: ButtonStyle(
+                                                minimumSize:
+                                                    MaterialStateProperty.all<
+                                                            Size>(
+                                                        screenSize * 0.05),
+                                                backgroundColor:
+                                                    MaterialStateProperty
+                                                        .all<Color>(CustomColors
+                                                            .primaryColor),
+                                                shape: MaterialStateProperty.all<
+                                                        RoundedRectangleBorder>(
+                                                    RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(18.0),
+                                                        side: BorderSide(
+                                                            color:
+                                                                Colors.red))),
+                                              ),
+                                              onPressed: () {
+                                                return _selectDate(context);
+                                              },
+                                              child: Text(
+                                                selectedDate == null
+                                                    ? 'Select date'
+                                                    : formattedDate,
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: screenSize.width * 0.05,
+                                ),
+                                Material(
+                                  elevation: 5.0,
+                                  shadowColor: CustomColors.secondaryColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        height: screenSize.width * 0.1,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                                screenSize.width * 0.05),
+                                        child: Center(
+                                          child: Text(
+                                            'Period Length',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: screenSize.width * 0.3,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () => setState(() {
+                                                if (periodLength != 0)
+                                                  periodLength--;
+                                              }),
+                                              child: Container(
+                                                width: screenSize.width * 0.05,
+                                                child: Icon(
+                                                  Icons.remove,
+                                                  size: screenSize.width * 0.05,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              '$periodLength',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                            GestureDetector(
+                                              onTap: () => setState(() {
+                                                periodLength++;
+                                                print(periodLength);
+                                              }),
+                                              child: Container(
+                                                width: screenSize.width * 0.05,
+                                                child: Icon(
+                                                  Icons.add,
+                                                  size: screenSize.width * 0.05,
+                                                ),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ),
                                 Padding(

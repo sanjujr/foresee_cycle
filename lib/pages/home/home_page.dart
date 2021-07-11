@@ -7,6 +7,7 @@ import 'package:firebase_database/firebase_database.dart' as prefix;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_calendar_carousel/classes/event.dart';
+import 'package:foresee_cycles/pages/home/edit_profile.dart';
 import 'package:foresee_cycles/pages/models.dart';
 import 'package:foresee_cycles/utils/constant_data.dart';
 import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
@@ -56,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
         userdata.height = event.data()['height'];
         userdata.weight = event.data()['weight'];
         userdata.email = user.email;
-        print(userdata.email);
+        // print(userdata.age);
       });
     });
     // print(collectionReference);
@@ -453,7 +454,10 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                     ),
                     Expanded(child: SizedBox()),
                     InkWell(
-                      onTap: () => {},
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => EditProfile())),
                       child: Text(
                         'Edit',
                         style: TextStyle(
