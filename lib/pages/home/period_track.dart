@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:foresee_cycles/pages/home/appbar.dart';
@@ -34,22 +35,34 @@ class _PeriodTrackerState extends State<PeriodTracker> {
 
   addData(DateTime date, int range) {
     Map<String, dynamic> data = {'period_days': range, 'start_date': date};
-    CollectionReference collectionReference =
-        FirebaseFirestore.instance.collection('period_date');
-    collectionReference.add(data);
+    var databaseReference = FirebaseFirestore.instance;
+    User user = FirebaseAuth.instance.currentUser;
+    databaseReference
+        .collection('user')
+        .doc(user.uid)
+        .collection('period_date')
+        .add(data);
+    // CollectionReference collectionReference =
+    //     FirebaseFirestore.instance.collection('period_date');
+    // collectionReference.add(data);
   }
 
   fetchData() {
-    CollectionReference collectionReference =
-        FirebaseFirestore.instance.collection('period_date');
-
+    var databaseReference = FirebaseFirestore.instance;
+    User user = FirebaseAuth.instance.currentUser;
+    CollectionReference collectionReference = databaseReference
+        .collection('user')
+        .doc(user.uid)
+        .collection('period_date');
     collectionReference.snapshots().listen((snapshot) {
       setState(() {
         documents = snapshot.docs;
       });
     });
-    CollectionReference collectionReference2 =
-        FirebaseFirestore.instance.collection('average_period');
+    CollectionReference collectionReference2 = databaseReference
+        .collection('user')
+        .doc(user.uid)
+        .collection('average_period');
     collectionReference2.snapshots().listen((snapshot) {
       setState(() {
         avgCycleLength = snapshot.docs[0]['cycle_lenth'];

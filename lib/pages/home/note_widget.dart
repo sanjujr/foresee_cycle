@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:foresee_cycles/pages/home/appbar.dart';
 import 'package:foresee_cycles/pages/home/period_track.dart';
+import 'package:foresee_cycles/pages/models.dart';
 import 'package:foresee_cycles/utils/styles.dart';
 
 // Container noteWidget(BuildContext context) {
@@ -15,13 +18,16 @@ import 'package:foresee_cycles/utils/styles.dart';
 // }
 
 class Notes extends StatefulWidget {
-  const Notes({Key key}) : super(key: key);
+  final String mlResponse;
+  Notes({this.mlResponse});
 
   @override
   _NotesState createState() => _NotesState();
 }
 
 class _NotesState extends State<Notes> {
+  var mlResponse;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -59,6 +65,22 @@ class _NotesState extends State<Notes> {
               ),
             ),
           ),
+          Spacer(),
+          widget.mlResponse == '1'
+              ? Container(
+                  decoration: BoxDecoration(border: Border.all(width: 1)),
+                  margin: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    'You might have Polycystic ovary syndrome (PCOS), consider consulting a doctor',
+                    style: TextStyle(
+                      fontSize: 22,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : SizedBox()
         ],
       ),
     );

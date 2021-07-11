@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart' as prefix;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +18,7 @@ import 'package:foresee_cycles/pages/home/chat_widget.dart';
 import 'package:foresee_cycles/pages/home/note_widget.dart';
 import 'package:foresee_cycles/utils/styles.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart ';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -34,47 +39,62 @@ List<DateTime> dates;
 FirebaseFirestore firestore = FirebaseFirestore.instance;
 EventList<Event> _markedDates;
 AsyncSnapshot<QuerySnapshot> streamSnapshot;
+User user = FirebaseAuth.instance.currentUser;
 
 class _HomeScreenState extends State<HomeScreen> {
   List documents;
+  var mlResponse;
+  getData() {
+    DocumentReference collectionReference =
+        FirebaseFirestore.instance.collection('user').doc(user.uid);
 
-  Future setData() async {
-    streamSnapshot = AsyncSnapshot.nothing();
-    if (!streamSnapshot.hasData) {
-      _startTimeStamp = await streamSnapshot.data.docs[0]['start_date'];
-    } else {}
-    print(_startTimeStamp);
+    collectionReference.snapshots().listen((event) {
+      setState(() {
+        userdata.name = event.data()['name'];
+        userdata.mbNo = event.data()['phone'].toString();
+        userdata.age = event.data()['age'];
+        userdata.height = event.data()['height'];
+        userdata.weight = event.data()['weight'];
+        userdata.email = user.email;
+        print(userdata.email);
+      });
+    });
+    // print(collectionReference);
   }
 
   fetchData() async {
-    CollectionReference collectionReference =
-        FirebaseFirestore.instance.collection('period_date');
+    var databaseReference = FirebaseFirestore.instance;
+
+    CollectionReference collectionReference = databaseReference
+        .collection('user')
+        .doc(user.uid)
+        .collection('period_date');
 
     collectionReference.snapshots().listen((snapshot) {
       setState(() {
         documents = snapshot.docs;
       });
     });
-
+    print(documents);
     _markedDates = EventList<Event>(events: {});
-
-    for (int i = 1; i < documents.length; i++) {
+    for (int i = 0; i < documents.length; i++) {
       dates = [];
       _startTimeStamp = documents[i]['start_date'];
       var periodDayss = documents[i]['period_days'];
       DateTime _startDate = DateTime.parse(_startTimeStamp.toDate().toString());
-
+      print(periodDayss);
       dates.add(_startDate);
-      for (int i = 1; i < periodDayss; i++) {
+      for (int j = 1; j < periodDayss; j++) {
         _startDate = _startDate.add(Duration(days: 1));
         dates.add(_startDate);
+        print(_startDate);
       }
 
-      for (int i = 0; i < dates.length; i++) {
+      for (int j = 0; j < dates.length; j++) {
         _markedDates.add(
-            dates[i],
+            dates[j],
             new Event(
-                date: dates[i],
+                date: dates[j],
                 title: "Period",
                 icon: Container(
                   decoration: BoxDecoration(
@@ -82,40 +102,83 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: CustomColors.primaryColor,
                   ),
                   child: Center(
-                    child: Text(dates[i].day.toString()),
+                    child: Text(dates[j].day.toString()),
                   ),
                 )));
-        // print(_startDate);
       }
     }
-    print(_markedDates);
+    // print(_markedDates);
+  }
+
+  predict() async {
+    getData();
+    var bmi = userdata.weight / ((userdata.height * userdata.height) / 10000);
+    var data = {
+      "age": userdata.age,
+      "weight": userdata.weight,
+      "height": userdata.height,
+      "bmi": bmi
+    };
+    print(data);
+    print(userdata.age);
+    var url = Uri.parse('https://predict-ml.herokuapp.com/predict');
+    await http
+        .post(url,
+            headers: {
+              "Content-Type": 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(data))
+        .then((response) {
+      print(response.statusCode);
+      print(response.body);
+      mlResponse = response.body;
+    });
+  }
+
+  getAlldata() async {
+    await getData();
+    predict();
+    fetchData();
   }
 
   @override
   void initState() {
+    getAlldata();
+    getData();
+    fetchData();
+    // predict();
     // FirebaseAuth.instance.signOut();
     _markedDates = EventList<Event>(events: {});
     dates = [];
-    setData();
-    fetchData();
+
     super.initState();
   }
 
+  int count = 1;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // floatingActionButton: FloatingActionButton(
-      //   onPressed: () => setData(),
+      //   onPressed: getAlldata,
+      //   // onPressed: () => FirebaseAuth.instance.signOut(),
       // ),
       body: StreamBuilder(
-          stream: firestore.collection('period_date').snapshots(),
+          stream: firestore
+              .collection('user')
+              .doc(user.uid)
+              .collection('period_date')
+              .snapshots(),
           builder: (BuildContext context, streamSnapshot) {
+            // getAlldata();
             return streamSnapshot.hasData
-                ? MyHomeBody(DateTime.parse(
-                    documents[0]['start_date'].toDate().toString()))
+                ? MyHomeBody(
+                    DateTime.parse(documents[documents.length - 1]['start_date']
+                        .toDate()
+                        .toString()),
+                    mlResponse)
                 : Text('Loading...');
           }),
-
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
@@ -170,10 +233,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     isNote = false;
                   });
                 },
-                child: buildContainerBottomNav(Icons.message, isChat),
+                child: buildContainerBottomNav(Icons.bar_chart, isChat),
               ),
               InkWell(
                 onTap: () {
+                  getAlldata();
                   setState(() {
                     isCalender = false;
                     isChat = false;
@@ -218,7 +282,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class MyHomeBody extends StatefulWidget {
   final DateTime lastPeriod;
-  MyHomeBody(this.lastPeriod);
+  final String mlResponse;
+  MyHomeBody(this.lastPeriod, this.mlResponse);
+
   @override
   _MyHomeBodyState createState() => _MyHomeBodyState();
 }
@@ -330,10 +396,10 @@ class _MyHomeBodyState extends State<MyHomeBody> {
         CalendarCarousel<Event>(
       onDayPressed: (DateTime date, List events) {
         this.setState(() => _currentDate = date);
-        firestore
-            .collection('period_date')
-            .doc('date')
-            .update({'start_date': _currentDate});
+        // firestore
+        //     .collection('period_date')
+        //     .doc('date')
+        //     .update({'start_date': _currentDate});
       },
       weekendTextStyle: TextStyle(
         color: CustomColors.primaryColor,
@@ -618,11 +684,11 @@ class _MyHomeBodyState extends State<MyHomeBody> {
         // SizedBox()
         calenderWidget(context)
         : isChat
-            ? chatWidget(context)
+            ? Chart()
             : isHome
                 ? homeWidget(context)
                 : isNote
-                    ? Notes()
+                    ? Notes(mlResponse: widget.mlResponse)
                     : profileWidget(context);
   }
 }

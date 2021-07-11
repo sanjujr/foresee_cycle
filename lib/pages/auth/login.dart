@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:foresee_cycles/pages/models.dart';
 
 import 'package:foresee_cycles/utils/styles.dart';
 import 'package:foresee_cycles/pages/auth/signup.dart';
@@ -13,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   TextEditingController emailController = TextEditingController();
@@ -34,12 +35,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> signIn() async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: userName,
-        password: password
-      );
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) =>
-          HomeScreen()));
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: userName, password: password);
+
+      DocumentReference collectionReference = FirebaseFirestore.instance
+          .collection('user')
+          .doc(userCredential.user.uid);
+
+      var documents;
+      collectionReference.snapshots().listen((snapshot) {
+        print(documents[userCredential.user.uid]);
+      });
+      collectionReference.snapshots().listen((event) {
+        setState(() {
+          userdata.name = event.get('name');
+          userdata.mbNo = event.get('phone');
+          userdata.age = event.get('age');
+
+          userdata.height = event.get('height');
+          userdata.weight = event.get('weight');
+          userdata.email = userCredential.user.email;
+          print(userdata.name);
+        });
+      });
+      // collectionReference2.snapshots().listen((snapshot) {
+      //   setState(() {
+      //     // userdata.name = snapshot.docs[userCredential.user.uid]['name'];
+      //     // avgPeriodLength = snapshot.docs[0]['period_length'];
+      //   });
+      // });
+
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => HomeScreen()));
       print(userCredential);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
@@ -63,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
       fontSize: 16.0,
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -92,9 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: screenSize.height * 0.54,
               width: screenSize.width,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20)
-              ),
+                  color: Colors.white, borderRadius: BorderRadius.circular(20)),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -103,116 +128,111 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
-                        fontSize:  screenSize.width * 0.095
-                    ),
+                        fontSize: screenSize.width * 0.095),
                   ),
                   Form(
-                    key: formKey,
-                    child: Padding(
-                      padding: EdgeInsets.all(screenSize.height * 0.025),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(
-                              bottom: screenSize.height * 0.01,
-                              top: screenSize.height * 0.01,
-                            ),
-                            child: Text(
-                              'Email',
-                              style: TextStyle(
-                                  color: Colors.black
+                      key: formKey,
+                      child: Padding(
+                        padding: EdgeInsets.all(screenSize.height * 0.025),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: screenSize.height * 0.01,
+                                top: screenSize.height * 0.01,
+                              ),
+                              child: Text(
+                                'Email',
+                                style: TextStyle(color: Colors.black),
                               ),
                             ),
-                          ),
-                          Material(
-                            elevation: 5.0,
-                            shadowColor: CustomColors.secondaryColor,
-                            borderRadius: BorderRadius.circular(10),
-                            child: TextFormField(
-                              onSaved: (input) {
-                                setState(() {
-                                  userName = input;
-                                });
-                                print('UserName: $input');
-                              },
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                
-                                hintText: 'User Name',
-                                prefixIcon: Icon(Icons.alternate_email),
-                                labelStyle: TextStyle(
-                                  fontSize: 16,
+                            Material(
+                              elevation: 5.0,
+                              shadowColor: CustomColors.secondaryColor,
+                              borderRadius: BorderRadius.circular(10),
+                              child: TextFormField(
+                                onSaved: (input) {
+                                  setState(() {
+                                    userName = input;
+                                  });
+                                  print('UserName: $input');
+                                },
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  hintText: 'User Name',
+                                  prefixIcon: Icon(Icons.alternate_email),
+                                  labelStyle: TextStyle(
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                              validator: (input) => input.isEmpty
-                                  ? 'User name field cannot be empty!'
-                                  : null,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(
-                              bottom: screenSize.height * 0.01,
-                              top: screenSize.height * 0.02,
-                            ),
-                            child: Text(
-                              'Password',
-                              style: TextStyle(
-                                  color: Colors.black
+                                validator: (input) => input.isEmpty
+                                    ? 'User name field cannot be empty!'
+                                    : null,
                               ),
                             ),
-                          ),
-                          Material(
-                            elevation: 5.0,
-                            shadowColor: CustomColors.secondaryColor,
-                            borderRadius: BorderRadius.circular(10),
-                            child: TextFormField(
-                              onSaved: (input) {
-                                setState(() {
-                                  password = input;
-                                });
-                                print('Password: $input');
-                              },
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,                                
-                                hintText: 'Password',
-                                prefixIcon: Icon(Icons.lock_outline_rounded),
-                                labelStyle: TextStyle(
-                                  fontSize: 16,
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: screenSize.height * 0.01,
+                                top: screenSize.height * 0.02,
+                              ),
+                              child: Text(
+                                'Password',
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                            Material(
+                              elevation: 5.0,
+                              shadowColor: CustomColors.secondaryColor,
+                              borderRadius: BorderRadius.circular(10),
+                              child: TextFormField(
+                                onSaved: (input) {
+                                  setState(() {
+                                    password = input;
+                                  });
+                                  print('Password: $input');
+                                },
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  hintText: 'Password',
+                                  prefixIcon: Icon(Icons.lock_outline_rounded),
+                                  labelStyle: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _toggleVisibility = !_toggleVisibility;
+                                      });
+                                    },
+                                    icon: _toggleVisibility
+                                        ? Icon(
+                                            Icons.visibility_off,
+                                            color: CustomColors.greyColor,
+                                          )
+                                        : Icon(
+                                            Icons.visibility,
+                                            color: CustomColors.greyColor,
+                                          ),
+                                  ),
                                 ),
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _toggleVisibility = !_toggleVisibility;
-                                    });
-                                  },
-                                  icon: _toggleVisibility
-                                    ? Icon(Icons.visibility_off,
-                                        color: CustomColors.greyColor,
-                                      )
-                                    : Icon(Icons.visibility,
-                                        color: CustomColors.greyColor,
-                                    ),
-                                ),
+                                obscureText: _toggleVisibility,
+                                validator: (input) => input.isEmpty
+                                    ? 'Password field cannot be empty!'
+                                    : null,
                               ),
-                              obscureText: _toggleVisibility,
-                              validator: (input) => input.isEmpty
-                                ? 'Password field cannot be empty!'
-                                : null,
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  ),
+                          ],
+                        ),
+                      )),
                   CheckboxListTile(
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -231,8 +251,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           onTap: () {
-                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => ForgotPasswordScreen
-                              ()));
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => ForgotPasswordScreen()));
                           },
                         ),
                       ],
@@ -247,28 +267,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   SizedBox(height: screenSize.height * 0.01),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.05),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: screenSize.width * 0.05),
                     child: GestureDetector(
                       child: Container(
                         height: 50.0,
                         width: MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                             color: CustomColors.primaryColor,
-                            borderRadius: BorderRadius.all(Radius.circular(20))
-                        ),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(20))),
                         child: Center(
                           child: Text(
                             'login'.toUpperCase(),
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenSize.width * 0.06,
-                                fontWeight: FontWeight.bold
-                            ),
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
                       onTap: () {
-                        if(validateAndSave()){
+                        if (validateAndSave()) {
                           signIn();
                         }
                       },
@@ -287,12 +307,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                               color: CustomColors.primaryColor,
                               fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline
-                          ),
+                              decoration: TextDecoration.underline),
                         ),
                         onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (context) =>
-                              SignUpScreen()));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => SignUpScreen()));
                         },
                       )
                     ],
