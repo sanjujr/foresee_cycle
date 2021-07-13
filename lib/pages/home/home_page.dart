@@ -45,6 +45,7 @@ User user = FirebaseAuth.instance.currentUser;
 class _HomeScreenState extends State<HomeScreen> {
   List documents;
   var mlResponse;
+  //get user details
   getData() {
     DocumentReference collectionReference =
         FirebaseFirestore.instance.collection('user').doc(user.uid);
@@ -57,12 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
         userdata.height = event.data()['height'];
         userdata.weight = event.data()['weight'];
         userdata.email = user.email;
-        // print(userdata.age);
       });
     });
-    // print(collectionReference);
   }
 
+  //GET USER period dates
   fetchData() async {
     var databaseReference = FirebaseFirestore.instance;
 
@@ -85,12 +85,13 @@ class _HomeScreenState extends State<HomeScreen> {
       DateTime _startDate = DateTime.parse(_startTimeStamp.toDate().toString());
       print(periodDayss);
       dates.add(_startDate);
+      //making list of period dates
       for (int j = 1; j < periodDayss; j++) {
         _startDate = _startDate.add(Duration(days: 1));
         dates.add(_startDate);
         print(_startDate);
       }
-
+      //add events to calender
       for (int j = 0; j < dates.length; j++) {
         _markedDates.add(
             dates[j],
@@ -108,9 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 )));
       }
     }
-    // print(_markedDates);
   }
 
+  //prediction
   predict() async {
     getData();
     var bmi = userdata.weight / ((userdata.height * userdata.height) / 10000);
@@ -133,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .then((response) {
       print(response.statusCode);
       print(response.body);
+      //store response from ml
       mlResponse = response.body;
     });
   }
@@ -143,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchData();
   }
 
+  //function is called when page loads
   @override
   void initState() {
     getAlldata();
@@ -160,10 +163,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: getAlldata,
-      //   // onPressed: () => FirebaseAuth.instance.signOut(),
-      // ),
       body: StreamBuilder(
           stream: firestore
               .collection('user')
@@ -171,7 +170,11 @@ class _HomeScreenState extends State<HomeScreen> {
               .collection('period_date')
               .snapshots(),
           builder: (BuildContext context, streamSnapshot) {
-            // getAlldata();
+            if (count == 1) {
+              getAlldata();
+              count++;
+            }
+
             return streamSnapshot.hasData
                 ? MyHomeBody(
                     DateTime.parse(documents[documents.length - 1]['start_date']
@@ -303,6 +306,7 @@ class _MyHomeBodyState extends State<MyHomeBody> {
   }
 
   String formattedDate;
+  String nextDate;
   final today = DateTime.now();
   int difference;
 
@@ -336,8 +340,8 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                   ],
                 ),
               ),
-              width: MediaQuery.of(context).size.width * 0.6,
-              height: MediaQuery.of(context).size.width * 0.6,
+              width: MediaQuery.of(context).size.width * 0.7,
+              height: MediaQuery.of(context).size.width * 0.7,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -368,6 +372,29 @@ class _MyHomeBodyState extends State<MyHomeBody> {
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.width * 0.05,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: Text(
+                      "Next Period",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: Text(
+                      nextDate,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
                           fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -415,17 +442,14 @@ class _MyHomeBodyState extends State<MyHomeBody> {
       height: MediaQuery.of(context).size.height * 0.6,
       selectedDateTime: _currentDate,
       selectedDayButtonColor: Colors.white,
-      // selectedDayBorderColor: CustomColors.primaryColor,
       selectedDayTextStyle: TextStyle(color: Colors.black),
       daysHaveCircularBorder: true,
       isScrollable: false,
       todayButtonColor: Colors.blueAccent,
     );
-    // : Center(child: Text('Loading...'));
   }
-  //   );
-  // }
 
+  var avgCycleLength = 28;
   Container profileWidget(BuildContext context) {
     return Container(
         child: Stack(
@@ -669,9 +693,12 @@ class _MyHomeBodyState extends State<MyHomeBody> {
     ));
   }
 
+  //set dates of last period and next period for display
   setDate() {
     formattedDate = DateFormat('MMM dd').format(widget.lastPeriod);
     difference = today.difference(widget.lastPeriod).inDays;
+    nextDate = DateFormat('MMM dd')
+        .format(widget.lastPeriod.add(Duration(days: avgCycleLength)));
   }
 
   @override

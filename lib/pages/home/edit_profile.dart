@@ -15,6 +15,8 @@ class _EditProfileState extends State<EditProfile> {
   int height = userdata.height;
   int weight = userdata.weight;
   int temp;
+
+  //edit user details
   editUser() async {
     final CollectionReference userData =
         FirebaseFirestore.instance.collection('user');

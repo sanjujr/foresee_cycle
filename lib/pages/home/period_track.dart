@@ -20,6 +20,8 @@ class _PeriodTrackerState extends State<PeriodTracker> {
   AsyncSnapshot<QuerySnapshot> streamSnapshot;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   String formattedDate;
+
+  //date picker
   Future<void> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
         context: context,
@@ -33,6 +35,7 @@ class _PeriodTrackerState extends State<PeriodTracker> {
       });
   }
 
+  //adding date document to database
   addData(DateTime date, int range) {
     Map<String, dynamic> data = {'period_days': range, 'start_date': date};
     var databaseReference = FirebaseFirestore.instance;
@@ -47,6 +50,7 @@ class _PeriodTrackerState extends State<PeriodTracker> {
     // collectionReference.add(data);
   }
 
+  // fetch date document from db
   fetchData() {
     var databaseReference = FirebaseFirestore.instance;
     User user = FirebaseAuth.instance.currentUser;
@@ -71,6 +75,7 @@ class _PeriodTrackerState extends State<PeriodTracker> {
     });
   }
 
+  //show toast notification
   void showSnackbar(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -104,15 +109,7 @@ class _PeriodTrackerState extends State<PeriodTracker> {
           ],
         ),
       ),
-      child:
-          // Text("Full Name: ${data['full_name']} ${data['last_name']}");
-
-          // setData(streamSnapshot);
-          // if (streamSnapshot.data != null) {
-          //   periodLength = streamSnapshot.data.docs[0]['period_days'];
-          // }
-          // print(periodLength);
-          Scaffold(
+      child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: PreferredSize(
           preferredSize: size * 0.125,

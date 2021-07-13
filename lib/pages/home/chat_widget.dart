@@ -22,12 +22,15 @@ class _ChartState extends State<Chart> {
   int avgPeriodLength;
   int totalPeriodLength;
   bool isLoading;
+
+  //fetch chart data from db
   fetchData() {
     setState(() {
       isLoading = true;
     });
     var databaseReference = FirebaseFirestore.instance;
     User user = FirebaseAuth.instance.currentUser;
+    //get collection
     CollectionReference collectionReference = databaseReference
         .collection('user')
         .doc(user.uid)
@@ -38,7 +41,7 @@ class _ChartState extends State<Chart> {
         chartData = [];
         totalPeriodLength = 0;
       });
-
+      //create list of period data
       for (int i = 0; i < documents.length; i++) {
         setState(() {
           chartData.add(ChartData(periodLength: documents[i]['period_days']));
@@ -76,7 +79,6 @@ class _ChartState extends State<Chart> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(onPressed: fetchData),
       body: isLoading
           ? Text("Loading...")
           : SingleChildScrollView(

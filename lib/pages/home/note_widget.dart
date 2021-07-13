@@ -7,16 +7,6 @@ import 'package:foresee_cycles/pages/home/period_track.dart';
 import 'package:foresee_cycles/pages/models.dart';
 import 'package:foresee_cycles/utils/styles.dart';
 
-// Container noteWidget(BuildContext context) {
-//   return Container(
-//     child: Column(
-//       children: [
-//         customAppBar(context, "Notes"),
-//       ],
-//     ),
-//   );
-// }
-
 class Notes extends StatefulWidget {
   final String mlResponse;
   Notes({this.mlResponse});
@@ -30,8 +20,6 @@ class _NotesState extends State<Notes> {
 
   @override
   void initState() {
-    // TODO: implement initState
-
     super.initState();
   }
 
