@@ -54,21 +54,6 @@ class _NotesState extends State<Notes> {
             ),
           ),
           Spacer(),
-          widget.mlResponse == '1'
-              ? Container(
-                  decoration: BoxDecoration(border: Border.all(width: 1)),
-                  margin: const EdgeInsets.all(20.0),
-                  padding: const EdgeInsets.all(20.0),
-                  child: Text(
-                    'You might have Polycystic ovary syndrome (PCOS), consider consulting a doctor',
-                    style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              : SizedBox()
         ],
       ),
     );

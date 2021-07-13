@@ -180,7 +180,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     DateTime.parse(documents[documents.length - 1]['start_date']
                         .toDate()
                         .toString()),
-                    mlResponse)
+                    mlResponse,
+                    documents)
                 : Text('Loading...');
           }),
       bottomNavigationBar: Container(
@@ -287,7 +288,8 @@ class _HomeScreenState extends State<HomeScreen> {
 class MyHomeBody extends StatefulWidget {
   final DateTime lastPeriod;
   final String mlResponse;
-  MyHomeBody(this.lastPeriod, this.mlResponse);
+  List documents;
+  MyHomeBody(this.lastPeriod, this.mlResponse, this.documents);
 
   @override
   _MyHomeBodyState createState() => _MyHomeBodyState();
@@ -299,7 +301,7 @@ class _MyHomeBodyState extends State<MyHomeBody> {
       child: Column(
         children: [
           customAppBar(context, "Home"),
-          homeBodyWidget(context),
+          homeBodyWidget(context, widget.mlResponse, widget.documents),
         ],
       ),
     );
@@ -310,99 +312,125 @@ class _MyHomeBodyState extends State<MyHomeBody> {
   final today = DateTime.now();
   int difference;
 
-  Expanded homeBodyWidget(BuildContext context) {
+  Expanded homeBodyWidget(
+      BuildContext context, String mlResponse, List documents) {
     return Expanded(
-      child: Container(
-        child: Center(
-          child: InkWell(
-            splashColor: Colors.white,
-            borderRadius:
-                BorderRadius.circular(MediaQuery.of(context).size.width * 0.3),
-            onTap: () {
-              setState(() {
-                isCalender = true;
-                isChat = false;
-                isHome = false;
-                isProfile = false;
-                isNote = false;
-              });
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  stops: [0.4, 0.7],
-                  colors: [
-                    Color(0xFFfbceac),
-                    Color(0xFFf48988),
-                  ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            child: Center(
+              child: InkWell(
+                splashColor: Colors.white,
+                borderRadius: BorderRadius.circular(
+                    MediaQuery.of(context).size.width * 0.3),
+                onTap: () {
+                  setState(() {
+                    isCalender = true;
+                    isChat = false;
+                    isHome = false;
+                    isProfile = false;
+                    isNote = false;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [0.4, 0.7],
+                      colors: [
+                        Color(0xFFfbceac),
+                        Color(0xFFf48988),
+                      ],
+                    ),
+                  ),
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  height: MediaQuery.of(context).size.width * 0.7,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: Text(
+                          "Last Period",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: Text(
+                          formattedDate,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: Text(
+                          "$difference days ago",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.width * 0.05,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: Text(
+                          "Next Period",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: Text(
+                          nextDate,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              width: MediaQuery.of(context).size.width * 0.7,
-              height: MediaQuery.of(context).size.width * 0.7,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Text(
-                      "Last Period",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Text(
-                      formattedDate,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Text(
-                      "$difference days ago",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.width * 0.05,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Text(
-                      "Next Period",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Text(
-                      nextDate,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
-        ),
+          SizedBox(
+            height: 30,
+          ),
+          mlResponse == '1' && documents.length > 1
+              ? Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(width: 1),
+                  ),
+                  margin: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    'You might have Polycystic ovary syndrome (PCOS), consider consulting a doctor',
+                    style: TextStyle(
+                      fontSize: 22,
+                      color: CustomColors.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : SizedBox()
+        ],
       ),
     );
   }
